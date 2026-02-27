@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/CrossAudio.WavSharp.svg)](https://www.nuget.org/packages/CrossAudio.WavSharp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![.NET](https://img.shields.io/badge/.NET-8.0%2B-blue.svg)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10.0%2B-blue.svg)](https://dotnet.microsoft.com/)
 
 A high-performance, pure C# WAV audio codec library for .NET. This library provides comprehensive WAV file reading and writing capabilities with support for metadata, cue points, and sampler information.
 
