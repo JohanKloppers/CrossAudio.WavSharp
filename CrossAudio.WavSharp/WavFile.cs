@@ -3,12 +3,12 @@ namespace CrossAudio.WavSharp
     public class WavFile
     {
         // RIFF chunk descriptor
-        public string ChunkId { get; set; }
+        public string? ChunkId { get; set; }
         public uint ChunkSize { get; set; }
-        public string Format { get; set; }
+        public string? Format { get; set; }
 
         // "fmt " sub-chunk
-        public string SubChunk1Id { get; set; }
+        public string? SubChunk1Id { get; set; }
         public uint SubChunk1Size { get; set; }
         public ushort AudioFormat { get; set; }
         public ushort NumChannels { get; set; }
@@ -18,8 +18,10 @@ namespace CrossAudio.WavSharp
         public ushort BitsPerSample { get; set; }
 
         // "data" sub-chunk
-        public string SubChunk2Id { get; set; }
+        public string? SubChunk2Id { get; set; }
         public uint SubChunk2Size { get; set; }
-        public byte[] Data { get; set; }
+        public byte[]? Data { get; set; }
+
+        public Metadata? Metadata { get; set; }
     }
 }

@@ -2,7 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossAudio.WavSharp", "CrossAudio.WavSharp.csproj", "{E706BE35-538A-3746-3800-3025558E69CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossAudio.WavSharp", "CrossAudio.WavSharp\CrossAudio.WavSharp.csproj", "{c01c7ba3-b7cf-4392-bebc-6f0bf70e025e}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossAudio.WavSharp.Tests", "CrossAudio.WavSharp.Tests\CrossAudio.WavSharp.Tests.csproj", "{8f21d00b-bc78-4eea-a784-b17ea4c6e819}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,15 +12,19 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E706BE35-538A-3746-3800-3025558E69CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E706BE35-538A-3746-3800-3025558E69CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E706BE35-538A-3746-3800-3025558E69CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E706BE35-538A-3746-3800-3025558E69CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{c01c7ba3-b7cf-4392-bebc-6f0bf70e025e}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{c01c7ba3-b7cf-4392-bebc-6f0bf70e025e}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{c01c7ba3-b7cf-4392-bebc-6f0bf70e025e}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{c01c7ba3-b7cf-4392-bebc-6f0bf70e025e}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8f21d00b-bc78-4eea-a784-b17ea4c6e819}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8f21d00b-bc78-4eea-a784-b17ea4c6e819}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8f21d00b-bc78-4eea-a784-b17ea4c6e819}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8f21d00b-bc78-4eea-a784-b17ea4c6e819}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {D500B973-3B39-4787-9601-C35D8F4AF425}
+		SolutionGuid = {9060ca3e-ecbb-4e47-922f-7db86434b164}
 	EndGlobalSection
 EndGlobal
