@@ -6,6 +6,11 @@
 
 A high-performance, pure C# WAV audio codec library for .NET. This library provides comprehensive WAV file reading and writing capabilities with support for metadata, cue points, and sampler information.
 
+## Acknowledgments
+
+- Original Go implementation: [go-audio/wav](https://github.com/go-audio/wav)
+- Inspired by the need for a high-performance, cross-platform WAV codec in .NET
+
 ## Features
 
 - **Complete WAV Support**: Read and write WAV files with all standard formats (8-bit, 16-bit, 24-bit, 32-bit PCM)
@@ -166,18 +171,9 @@ dotnet test
 - **Platforms**: Windows, Linux, macOS
 - **Architecture**: x64, ARM64
 
-## Contributing
-
-This project is a port of the [go-audio/wav](https://github.com/go-audio/wav) Go library. Contributions are welcome! Please feel free to submit issues and pull requests.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Original Go implementation: [go-audio/wav](https://github.com/go-audio/wav)
-- Inspired by the need for a high-performance, cross-platform WAV codec in .NET
 
 ## Roadmap
 
