@@ -260,6 +260,8 @@ namespace CrossAudio.WavSharp
 
             if (_reader == null) return null;
 
+            if (_wavFile == null) return null;
+
             // Seek to PCM data
             _stream!.Seek(_pcmDataStartPosition, SeekOrigin.Begin);
 
