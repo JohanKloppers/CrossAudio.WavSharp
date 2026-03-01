@@ -41,6 +41,12 @@ namespace CrossAudio.WavSharp
                     binaryWriter.Write(wavFile.Data.Length);
                     binaryWriter.Write(wavFile.Data);
                 }
+                else if (wavFile.AudioFormat == 3)
+                {
+                    // For IEEE float files created programmatically, Data might be null
+                    // In that case, we write an empty data chunk
+                    binaryWriter.Write(0);
+                }
 
                 // Metadata chunks
                 WriteListChunk(binaryWriter, wavFile);
@@ -63,14 +69,27 @@ namespace CrossAudio.WavSharp
 
             _stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             _writer = new BinaryWriter(_stream);
+
+            ushort bytesPerSample;
+            if (audioFormat == 3)
+            {
+                // IEEE Float: bitDepth should be 32 or 64
+                bytesPerSample = (ushort)(bitDepth / 8);
+            }
+            else
+            {
+                // PCM: bitDepth indicates bits per sample
+                bytesPerSample = (ushort)(bitDepth / 8);
+            }
+
             _wavFile = new WavFile
             {
                 AudioFormat = audioFormat,
                 NumChannels = numChannels,
                 SampleRate = sampleRate,
                 BitsPerSample = bitDepth,
-                BlockAlign = (ushort)(numChannels * bitDepth / 8),
-                ByteRate = sampleRate * numChannels * bitDepth / 8
+                BlockAlign = (ushort)(numChannels * bytesPerSample),
+                ByteRate = sampleRate * numChannels * bytesPerSample
             };
             _headerWritten = false;
             _dataChunkStarted = false;
@@ -98,6 +117,102 @@ namespace CrossAudio.WavSharp
         public void WriteFrame(byte[] frameData)
         {
             Write(frameData);
+        }
+
+        public void WriteFloatSamples(float[] samples)
+        {
+            if (_writer == null || _wavFile == null) throw new InvalidOperationException("Writer not opened");
+            if (_wavFile.AudioFormat != 3) throw new InvalidOperationException("Audio format is not IEEE Floating-Point");
+
+            if (!_headerWritten)
+            {
+                WriteHeader();
+            }
+
+            if (!_dataChunkStarted)
+            {
+                WriteDataChunkHeader();
+            }
+
+            foreach (var sample in samples)
+            {
+                _writer.Write(sample);
+                _writtenBytes += 4;
+            }
+        }
+
+        public static byte[] ConvertFloatToPcm(float[] floatSamples, ushort bitsPerSample)
+        {
+            var pcmData = new byte[floatSamples.Length * bitsPerSample / 8];
+
+            if (bitsPerSample == 16)
+            {
+                for (int i = 0; i < floatSamples.Length; i++)
+                {
+                    var clamped = Math.Clamp(floatSamples[i], -1.0f, 1.0f);
+                    var sample = (short)(clamped * 32767.0f);
+                    var bytes = BitConverter.GetBytes(sample);
+                    Array.Copy(bytes, 0, pcmData, i * 2, 2);
+                }
+            }
+            else if (bitsPerSample == 24)
+            {
+                for (int i = 0; i < floatSamples.Length; i++)
+                {
+                    var clamped = Math.Clamp(floatSamples[i], -1.0f, 1.0f);
+                    var sample = (int)(clamped * 8388607.0f);
+                    pcmData[i * 3] = (byte)(sample & 0xFF);
+                    pcmData[i * 3 + 1] = (byte)((sample >> 8) & 0xFF);
+                    pcmData[i * 3 + 2] = (byte)((sample >> 16) & 0xFF);
+                }
+            }
+            else if (bitsPerSample == 32)
+            {
+                for (int i = 0; i < floatSamples.Length; i++)
+                {
+                    var clamped = Math.Clamp(floatSamples[i], -1.0f, 1.0f);
+                    var sample = (int)(clamped * 2147483647.0f);
+                    var bytes = BitConverter.GetBytes(sample);
+                    Array.Copy(bytes, 0, pcmData, i * 4, 4);
+                }
+            }
+            else
+            {
+                throw new NotSupportedException($"PCM bit depth {bitsPerSample} not supported");
+            }
+
+            return pcmData;
+        }
+
+        public static float[] ResampleAudio(float[] inputSamples, uint inputSampleRate, uint outputSampleRate, ushort numChannels)
+        {
+            if (inputSampleRate == outputSampleRate)
+            {
+                return (float[])inputSamples.Clone();
+            }
+
+            var ratio = (double)outputSampleRate / inputSampleRate;
+            var outputLength = (int)(inputSamples.Length * ratio / numChannels) * numChannels;
+            var outputSamples = new float[outputLength];
+
+            // Simple linear interpolation resampling
+            for (int ch = 0; ch < numChannels; ch++)
+            {
+                for (int i = 0; i < outputLength / numChannels; i++)
+                {
+                    var inputIndex = (double)i / ratio * numChannels + ch;
+                    var index = (int)inputIndex;
+                    var fraction = inputIndex - index;
+
+                    float sample1 = (index < inputSamples.Length) ? inputSamples[index] : 0.0f;
+                    float sample2 = (index + numChannels < inputSamples.Length) ? inputSamples[index + numChannels] : sample1;
+
+                    var interpolated = sample1 + (sample2 - sample1) * (float)fraction;
+                    outputSamples[i * numChannels + ch] = interpolated;
+                }
+            }
+
+            return outputSamples;
         }
 
         public void SetMetadata(Metadata metadata)

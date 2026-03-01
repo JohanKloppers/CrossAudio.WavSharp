@@ -431,4 +431,109 @@ public class WavPortTests
             }
         }
     }
+
+    [Fact]
+    public void AudioConverter_ConvertToFloat32_ShouldWork()
+    {
+        var inputFile = "TestAudio/kick.wav";
+        var outputFile = Path.GetTempFileName();
+
+        try
+        {
+            // Convert PCM 16-bit to IEEE Float 32-bit
+            AudioConverter.ConvertToFloat32(inputFile, outputFile);
+
+            // Read back and verify
+            var reader = new WavReader();
+            var convertedWav = reader.Read(outputFile);
+
+            Assert.Equal(3, convertedWav.AudioFormat);
+            Assert.Equal(32, convertedWav.BitsPerSample);
+            Assert.Equal(1, convertedWav.NumChannels);
+            Assert.Equal(22050u, convertedWav.SampleRate);
+
+            // Verify data exists
+            Assert.NotNull(convertedWav.Data);
+            Assert.True(convertedWav.Data.Length > 0);
+        }
+        finally
+        {
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
+        }
+    }
+
+    [Fact]
+    public void AudioConverter_ConvertToPcm16_ShouldWork()
+    {
+        var inputFile = "TestAudio/32bit.wav";
+        var outputFile = Path.GetTempFileName();
+
+        try
+        {
+            // Convert to PCM 16-bit
+            AudioConverter.ConvertToPcm16(inputFile, outputFile);
+
+            // Read back and verify
+            var reader = new WavReader();
+            var convertedWav = reader.Read(outputFile);
+
+            Assert.Equal(1, convertedWav.AudioFormat);
+            Assert.Equal(16, convertedWav.BitsPerSample);
+            Assert.Equal(1, convertedWav.NumChannels);
+            Assert.Equal(44100u, convertedWav.SampleRate);
+
+            // Verify data exists
+            Assert.NotNull(convertedWav.Data);
+            Assert.True(convertedWav.Data.Length > 0);
+        }
+        finally
+        {
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
+        }
+    }
+
+    [Fact]
+    public void AudioConverter_ResampleWavFile_ShouldWork()
+    {
+        var inputFile = "TestAudio/kick.wav";
+        var outputFile = Path.GetTempFileName();
+
+        try
+        {
+            // Resample from 22050 Hz to 44100 Hz
+            AudioConverter.ResampleWavFile(inputFile, outputFile, 44100);
+
+            // Read back and verify
+            var reader = new WavReader();
+            var resampledWav = reader.Read(outputFile);
+
+            Assert.Equal(1, resampledWav.AudioFormat);
+            Assert.Equal(16, resampledWav.BitsPerSample);
+            Assert.Equal(1, resampledWav.NumChannels);
+            Assert.Equal(44100u, resampledWav.SampleRate);
+
+            // Verify data exists and is approximately double the size
+            Assert.NotNull(resampledWav.Data);
+            Assert.True(resampledWav.Data.Length > 0);
+
+            // Original kick.wav has 4484 samples at 22050 Hz
+            // Resampled should have approximately 8968 samples at 44100 Hz
+            var expectedSamples = 4484 * 2; // Rough approximation
+            var actualSamples = resampledWav.Data.Length / 2; // 16-bit samples
+            Assert.True(actualSamples >= expectedSamples * 0.9 && actualSamples <= expectedSamples * 1.1);
+        }
+        finally
+        {
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
+        }
+    }
 }

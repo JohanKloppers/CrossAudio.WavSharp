@@ -179,7 +179,11 @@ namespace CrossAudio.WavSharp
                 if (_wavFile == null) return false;
 
                 if (_wavFile.NumChannels < 1) return false;
-                if (_wavFile.BitsPerSample < 8) return false;
+
+                // For PCM, BitsPerSample should be at least 8
+                // For IEEE Float, BitsPerSample should be 32 or 64
+                if (_wavFile.AudioFormat == 1 && _wavFile.BitsPerSample < 8) return false;
+                if (_wavFile.AudioFormat == 3 && _wavFile.BitsPerSample != 32 && _wavFile.BitsPerSample != 64) return false;
 
                 var duration = Duration();
                 return duration > TimeSpan.Zero;
@@ -198,7 +202,19 @@ namespace CrossAudio.WavSharp
                 throw new InvalidOperationException("Cannot calculate duration");
             }
 
-            var totalSamples = (_wavFile.SubChunk2Size * 8) / (_wavFile.BitsPerSample * _wavFile.NumChannels);
+            long bytesPerSample;
+            if (_wavFile.AudioFormat == 3)
+            {
+                // IEEE Float: BitsPerSample indicates float size (32 or 64)
+                bytesPerSample = _wavFile.BitsPerSample / 8;
+            }
+            else
+            {
+                // PCM: BitsPerSample indicates bit depth
+                bytesPerSample = _wavFile.BitsPerSample / 8;
+            }
+
+            var totalSamples = _wavFile.SubChunk2Size / (bytesPerSample * _wavFile.NumChannels);
             var durationSeconds = (double)totalSamples / _wavFile.SampleRate;
             return TimeSpan.FromSeconds(durationSeconds);
         }
@@ -248,6 +264,82 @@ namespace CrossAudio.WavSharp
             _stream!.Seek(_pcmDataStartPosition, SeekOrigin.Begin);
 
             return _reader.ReadBytes((int)_wavFile.SubChunk2Size);
+        }
+
+        public float[]? GetFloatSamples()
+        {
+            EnsureInitialized();
+            if (_wavFile == null || _wavFile.Data == null) return null;
+
+            if (_wavFile.AudioFormat != 3)
+            {
+                throw new InvalidOperationException("Audio format is not IEEE Floating-Point");
+            }
+
+            var floatSamples = new float[_wavFile.Data.Length / 4];
+            for (int i = 0; i < floatSamples.Length; i++)
+            {
+                floatSamples[i] = BitConverter.ToSingle(_wavFile.Data, i * 4);
+            }
+            return floatSamples;
+        }
+
+        public float[]? GetSamplesAsFloat()
+        {
+            EnsureInitialized();
+            if (_wavFile == null || _wavFile.Data == null) return null;
+
+            if (_wavFile.AudioFormat == 3)
+            {
+                // Already float
+                return GetFloatSamples();
+            }
+            else if (_wavFile.AudioFormat == 1)
+            {
+                // Convert PCM to float
+                return ConvertPcmToFloat(_wavFile.Data, _wavFile.BitsPerSample);
+            }
+            else
+            {
+                throw new NotSupportedException($"Audio format {_wavFile.AudioFormat} not supported");
+            }
+        }
+
+        private static float[] ConvertPcmToFloat(byte[] pcmData, ushort bitsPerSample)
+        {
+            var sampleCount = pcmData.Length * 8 / bitsPerSample;
+            var floatSamples = new float[sampleCount];
+
+            if (bitsPerSample == 16)
+            {
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    var sample = (short)(pcmData[i * 2] | (pcmData[i * 2 + 1] << 8));
+                    floatSamples[i] = sample / 32768.0f;
+                }
+            }
+            else if (bitsPerSample == 24)
+            {
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    var sample = pcmData[i * 3] | (pcmData[i * 3 + 1] << 8) | ((sbyte)pcmData[i * 3 + 2] << 16);
+                    floatSamples[i] = sample / 8388608.0f;
+                }
+            }
+            else if (bitsPerSample == 32)
+            {
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    var sample = BitConverter.ToInt32(pcmData, i * 4);
+                    floatSamples[i] = sample / 2147483648.0f;
+                }
+            }
+            else
+            {
+                throw new NotSupportedException($"PCM bit depth {bitsPerSample} not supported");
+            }
+
+            return floatSamples;
         }
 
         public WavFile? WavFile => _wavFile;
