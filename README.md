@@ -13,7 +13,8 @@ A high-performance, pure C# WAV audio codec library for .NET. This library provi
 
 ## Features
 
-- **Complete WAV Support**: Read and write WAV files with all standard formats (8-bit, 16-bit, 24-bit, 32-bit PCM)
+- **Complete WAV Support**: Read and write WAV files with all standard formats (8-bit, 16-bit, 24-bit, 32-bit PCM, IEEE Float 32-bit)
+- **Audio Format Conversion**: Convert between PCM and IEEE Float formats with automatic sample rate resampling
 - **Metadata Handling**: Full support for LIST INFO chunks, sampler information, and cue points
 - **Streaming API**: Efficient streaming operations with seek, rewind, and chunked reading
 - **Cross-Platform**: Pure .NET implementation, works on Windows, Linux, and macOS
@@ -123,11 +124,72 @@ writer.Write(chunk2);
 writer.Close();
 ```
 
+### Audio Format Conversion and Resampling
+
+Convert between different WAV formats and sample rates using the `AudioConverter` class:
+
+```csharp
+using CrossAudio.WavSharp;
+
+// Convert any WAV file to IEEE Float 32-bit (recommended for processing)
+AudioConverter.ConvertToFloat32("input.wav", "float_output.wav");
+
+// Convert to PCM 16-bit for storage/compression
+AudioConverter.ConvertToPcm16("input.wav", "pcm16_output.wav");
+
+// Convert to PCM 24-bit for high-quality storage
+AudioConverter.ConvertToPcm24("input.wav", "pcm24_output.wav");
+
+// Resample audio to different sample rates (preserves original format)
+AudioConverter.ResampleWavFile("44khz_audio.wav", "48khz_audio.wav", 48000);
+
+// Full control conversion with format and sample rate change
+AudioConverter.ConvertWavFile("input.wav", "output.wav",
+    targetAudioFormat: 3,    // IEEE Float
+    targetBitsPerSample: 32, // 32-bit float
+    targetSampleRate: 48000  // 48kHz
+);
+```
+
+### Working with Float Samples
+
+Extract audio samples as normalized floats for processing:
+
+```csharp
+using CrossAudio.WavSharp;
+
+// Read any WAV file and get samples as floats (-1.0 to 1.0)
+var reader = new WavReader();
+reader.Open("audio.wav");
+
+// Get samples as normalized floats regardless of source format
+float[]? samples = reader.GetSamplesAsFloat();
+
+if (samples != null)
+{
+    // Process samples...
+    for (int i = 0; i < samples.Length; i++)
+    {
+        // Apply effects, analysis, etc.
+        samples[i] = ProcessSample(samples[i]);
+    }
+
+    // Write back as IEEE Float WAV
+    var writer = new WavWriter();
+    writer.Open("processed.wav", reader.WavFile!.SampleRate, 32, reader.WavFile.NumChannels, 3);
+    writer.WriteFloatSamples(samples);
+    writer.Close();
+}
+
+reader.Close();
+```
+
 ## Supported Formats
 
-- **Audio Formats**: Linear PCM (integer)
-- **Bit Depths**: 8-bit, 16-bit, 24-bit, 32-bit
+- **Audio Formats**: Linear PCM (integer), IEEE Floating-Point
+- **Bit Depths**: 8-bit, 16-bit, 24-bit, 32-bit (PCM), 32-bit (IEEE Float)
 - **Channels**: Mono, Stereo, and multi-channel
+- **Sample Rates**: Any standard rate with automatic resampling support
 - **Metadata**: LIST INFO chunks, sampler info, cue points
 
 ## Architecture
@@ -177,7 +239,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Roadmap
 
-- IEEE float WAV support (WAV format 3)
-- Additional metadata formats
-- Performance optimizations
-- Extended format support
+- Additional metadata formats (BWF, iXML)
+- Advanced resampling algorithms (higher quality than linear interpolation)
+- Performance optimizations for large files
+- Extended format support (64-bit float, compressed formats)
